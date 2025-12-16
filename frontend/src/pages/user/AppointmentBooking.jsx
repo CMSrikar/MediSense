@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { Calendar, Clock, User, Mail, Phone, Stethoscope, FileText, Activity } from 'lucide-react';
-import { supabase } from "../../lib/supabase";
 import './AppointmentBooking.css';
 
 const departments = [
@@ -72,31 +71,35 @@ function AppointmentBooking({ onSuccess, onViewAppointments }) {
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
+  e.preventDefault();
 
-    if (!validateForm()) {
-      return;
+  if (!validateForm()) return;
+
+  setLoading(true);
+
+  try {
+    const response = await fetch("http://localhost:5000/api/appointments", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(formData),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.message || "Failed to book appointment");
     }
 
-    setLoading(true);
-
-    try {
-      const { data, error } = await supabase
-        .from('appointments')
-        .insert([formData])
-        .select()
-        .maybeSingle();
-
-      if (error) throw error;
-
-      onSuccess(data);
-    } catch (error) {
-      console.error('Error booking appointment:', error);
-      alert('Failed to book appointment. Please try again.');
-    } finally {
-      setLoading(false);
-    }
-  };
+    onSuccess(data); // backend response
+  } catch (error) {
+    console.error("Error booking appointment:", error);
+    alert("Failed to book appointment. Please try again.");
+  } finally {
+    setLoading(false);
+  }
+};
 
   const handleChange = (e) => {
     const { name, value } = e.target;

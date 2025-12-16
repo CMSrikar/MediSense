@@ -25,7 +25,7 @@ function BookingConfirmation({ bookingData, onViewAppointments, onBackToBooking 
 APPOINTMENT CONFIRMATION
 ========================
 
-Booking ID: ${bookingData.id.slice(0, 8).toUpperCase()}
+Booking ID: ${bookingData._id.slice(0, 8).toUpperCase()}
 Status: ${bookingData.status.toUpperCase()}
 
 PATIENT DETAILS
@@ -60,7 +60,7 @@ Thank you for choosing our healthcare services!
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `appointment-${bookingData.id.slice(0, 8)}.txt`;
+    a.download = `appointment-${bookingData._id.slice(0, 8)}.txt`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -108,7 +108,7 @@ Thank you for choosing our healthcare services!
 
         <div className="booking-id-card">
           <span className="booking-id-label">Booking ID</span>
-          <span className="booking-id-value">{bookingData.id.slice(0, 8).toUpperCase()}</span>
+          <span className="booking-id-value">{bookingData._id.slice(0, 8).toUpperCase()}</span>
           <div className="status-badge">
             <span className="status-dot"></span>
             {bookingData.status}

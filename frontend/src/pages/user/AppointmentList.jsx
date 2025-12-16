@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { Calendar, Clock, User, Stethoscope, Search, Filter, ArrowLeft, CheckCircle, XCircle, AlertCircle, Clock as ClockPending, Video, Trash2 } from 'lucide-react';
-import { supabase } from "../../lib/supabase";
 import './AppointmentList.css';
 
 function AppointmentList({ onBackToBooking }) {
@@ -15,57 +14,62 @@ function AppointmentList({ onBackToBooking }) {
   }, []);
 
   const fetchAppointments = async () => {
-    setLoading(true);
-    try {
-      const { data, error } = await supabase
-        .from('appointments')
-        .select('*')
-        .order('appointment_date', { ascending: false })
-        .order('created_at', { ascending: false });
+  setLoading(true);
+  try {
+    const res = await fetch("http://localhost:5000/api/appointments");
+    const data = await res.json();
+    setAppointments(data || []);
+  } catch (error) {
+    console.error("Error fetching appointments:", error);
+  } finally {
+    setLoading(false);
+  }
+};
 
-      if (error) throw error;
-      setAppointments(data || []);
-    } catch (error) {
-      console.error('Error fetching appointments:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleStatusUpdate = async (id, newStatus) => {
-    try {
-      const { error } = await supabase
-        .from('appointments')
-        .update({ status: newStatus })
-        .eq('id', id);
+  try {
+    const res = await fetch(
+      `http://localhost:5000/api/appointments/${id}/status`,
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ status: newStatus }),
+      }
+    );
 
-      if (error) throw error;
-      fetchAppointments();
-    } catch (error) {
-      console.error('Error updating status:', error);
-      alert('Failed to update appointment status');
-    }
-  };
+    if (!res.ok) throw new Error("Failed to update status");
+    fetchAppointments();
+  } catch (error) {
+    console.error("Error updating status:", error);
+    alert("Failed to update appointment status");
+  }
+};
+
 
   const handleDelete = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this appointment?')) {
-      return;
-    }
+  if (!window.confirm("Are you sure you want to delete this appointment?")) {
+    return;
+  }
 
-    try {
-      const { error } = await supabase
-        .from('appointments')
-        .delete()
-        .eq('id', id);
+  try {
+    const res = await fetch(
+      `http://localhost:5000/api/appointments/${id}`,
+      { method: "DELETE" }
+    );
 
-      if (error) throw error;
-      fetchAppointments();
-      setSelectedAppointment(null);
-    } catch (error) {
-      console.error('Error deleting appointment:', error);
-      alert('Failed to delete appointment');
-    }
-  };
+    if (!res.ok) throw new Error("Failed to delete appointment");
+
+    fetchAppointments();
+    setSelectedAppointment(null);
+  } catch (error) {
+    console.error("Error deleting appointment:", error);
+    alert("Failed to delete appointment");
+  }
+};
+
 
   const filteredAppointments = appointments.filter(apt => {
     const matchesSearch =
@@ -223,8 +227,8 @@ function AppointmentList({ onBackToBooking }) {
         <div className="appointments-grid">
           {filteredAppointments.map((appointment, index) => (
             <div
-              key={appointment.id}
-              className={`appointment-card ${selectedAppointment?.id === appointment.id ? 'selected' : ''}`}
+              key={appointment._id}
+              className={`appointment-card ${selectedAppointment?.id === appointment._id ? 'selected' : ''}`}
               style={{ animationDelay: `${index * 0.1}s` }}
               onClick={() => setSelectedAppointment(appointment)}
             >
@@ -233,7 +237,7 @@ function AppointmentList({ onBackToBooking }) {
                   {getStatusIcon(appointment.status)}
                   <span>{appointment.status}</span>
                 </div>
-                <span className="booking-id">#{appointment.id.slice(0, 8).toUpperCase()}</span>
+                <span className="booking-id">#{appointment._id.slice(0, 8).toUpperCase()}</span>
               </div>
 
               <div className="card-body">
@@ -277,7 +281,7 @@ function AppointmentList({ onBackToBooking }) {
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      handleStatusUpdate(appointment.id, 'confirmed');
+                      handleStatusUpdate(appointment._id, 'confirmed');
                     }}
                     className="action-btn confirm-btn"
                   >
@@ -299,7 +303,7 @@ function AppointmentList({ onBackToBooking }) {
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
-                        handleStatusUpdate(appointment.id, 'completed');
+                        handleStatusUpdate(appointment._id, 'completed');
                       }}
                       className="action-btn complete-btn"
                     >
@@ -311,7 +315,7 @@ function AppointmentList({ onBackToBooking }) {
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      handleStatusUpdate(appointment.id, 'cancelled');
+                      handleStatusUpdate(appointment._id, 'cancelled');
                     }}
                     className="action-btn cancel-btn"
                   >
@@ -321,7 +325,7 @@ function AppointmentList({ onBackToBooking }) {
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
-                    handleDelete(appointment.id);
+                    handleDelete(appointment._id);
                   }}
                   className="action-btn delete-btn"
                 >
