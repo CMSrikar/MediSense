@@ -34,12 +34,12 @@ function Header({ onNavigateToBooking }) {
             <a href="#testimonials" className="nav-link">Testimonials</a>
             <a href="#contact" className="nav-link">Contact</a>
             <a href="#about" className="nav-link">About</a>
-            <button 
+            {/* <button 
               className="btn btn-primary nav-btn"
               onClick={onNavigateToBooking}
             >
               Book Appointment
-            </button>
+            </button> */}
           </div>
           
           <button 

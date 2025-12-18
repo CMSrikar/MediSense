@@ -22,11 +22,20 @@ function Contact() {
           }
         });
       },
-      { threshold: 0.1 }
+      { threshold: 0.1, rootMargin: '0px 0px -50px 0px' }
     );
 
+    // Observe all refs
     contactRefs.current.forEach((ref) => {
-      if (ref) observer.observe(ref);
+      if (ref) {
+        observer.observe(ref);
+        // Check if element is already in viewport
+        const rect = ref.getBoundingClientRect();
+        const isVisible = rect.top < window.innerHeight && rect.bottom > 0;
+        if (isVisible) {
+          ref.classList.add('visible');
+        }
+      }
     });
 
     return () => observer.disconnect();
@@ -98,7 +107,7 @@ function Contact() {
           <p>Have questions? We're here to help you with your healthcare journey</p>
         </div>
 
-        <div className="contact-content">
+        <div className="contact-info-wrapper">
           <div className="contact-info">
             {contactInfo.map((item, index) => (
               <div
@@ -117,8 +126,14 @@ function Contact() {
               </div>
             ))}
           </div>
+        </div>
 
-          <div className="contact-form-container slide-in-right">
+        <div className="contact-content">
+
+          <div 
+            ref={el => contactRefs.current[4] = el}
+            className="contact-form-container slide-in-right"
+          >
             <div className="form-header">
               <h3>Send us a Message</h3>
               <p>Fill out the form below and our team will get back to you within 24 hours</p>
