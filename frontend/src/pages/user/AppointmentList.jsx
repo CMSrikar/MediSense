@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Calendar, Clock, User, Stethoscope, Search, Filter, ArrowLeft, CheckCircle, XCircle, AlertCircle, Clock as ClockPending, Video, Trash2 } from 'lucide-react';
 import './AppointmentList.css';
 
 function AppointmentList({ onBackToBooking }) {
+  const { t } = useTranslation();
   const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -14,61 +16,61 @@ function AppointmentList({ onBackToBooking }) {
   }, []);
 
   const fetchAppointments = async () => {
-  setLoading(true);
-  try {
-    const res = await fetch("http://localhost:5000/api/appointments");
-    const data = await res.json();
-    setAppointments(data || []);
-  } catch (error) {
-    console.error("Error fetching appointments:", error);
-  } finally {
-    setLoading(false);
-  }
-};
+    setLoading(true);
+    try {
+      const res = await fetch("http://localhost:5000/api/appointments");
+      const data = await res.json();
+      setAppointments(data || []);
+    } catch (error) {
+      console.error("Error fetching appointments:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
 
   const handleStatusUpdate = async (id, newStatus) => {
-  try {
-    const res = await fetch(
-      `http://localhost:5000/api/appointments/${id}/status`,
-      {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ status: newStatus }),
-      }
-    );
+    try {
+      const res = await fetch(
+        `http://localhost:5000/api/appointments/${id}/status`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ status: newStatus }),
+        }
+      );
 
-    if (!res.ok) throw new Error("Failed to update status");
-    fetchAppointments();
-  } catch (error) {
-    console.error("Error updating status:", error);
-    alert("Failed to update appointment status");
-  }
-};
+      if (!res.ok) throw new Error("Failed to update status");
+      fetchAppointments();
+    } catch (error) {
+      console.error("Error updating status:", error);
+      alert("Failed to update appointment status");
+    }
+  };
 
 
   const handleDelete = async (id) => {
-  if (!window.confirm("Are you sure you want to delete this appointment?")) {
-    return;
-  }
+    if (!window.confirm("Are you sure you want to delete this appointment?")) {
+      return;
+    }
 
-  try {
-    const res = await fetch(
-      `http://localhost:5000/api/appointments/${id}`,
-      { method: "DELETE" }
-    );
+    try {
+      const res = await fetch(
+        `http://localhost:5000/api/appointments/${id}`,
+        { method: "DELETE" }
+      );
 
-    if (!res.ok) throw new Error("Failed to delete appointment");
+      if (!res.ok) throw new Error("Failed to delete appointment");
 
-    fetchAppointments();
-    setSelectedAppointment(null);
-  } catch (error) {
-    console.error("Error deleting appointment:", error);
-    alert("Failed to delete appointment");
-  }
-};
+      fetchAppointments();
+      setSelectedAppointment(null);
+    } catch (error) {
+      console.error("Error deleting appointment:", error);
+      alert("Failed to delete appointment");
+    }
+  };
 
 
   const filteredAppointments = appointments.filter(apt => {
@@ -123,11 +125,11 @@ function AppointmentList({ onBackToBooking }) {
       <div className="appointments-header">
         <button onClick={onBackToBooking} className="back-button">
           <ArrowLeft size={20} />
-          Back
+          {t('appointments.back', 'Back')}
         </button>
         <div className="header-content">
-          <h1 className="appointments-title">My Appointments</h1>
-          <p className="appointments-subtitle">Track and manage all your appointments</p>
+          <h1 className="appointments-title">{t('appointments.title', 'My Appointments')}</h1>
+          <p className="appointments-subtitle">{t('appointments.subtitle', 'Track and manage all your appointments')}</p>
         </div>
       </div>
 
@@ -192,11 +194,11 @@ function AppointmentList({ onBackToBooking }) {
             onChange={(e) => setFilterStatus(e.target.value)}
             className="filter-select"
           >
-            <option value="all">All Status</option>
-            <option value="pending">Pending</option>
-            <option value="confirmed">Confirmed</option>
-            <option value="completed">Completed</option>
-            <option value="cancelled">Cancelled</option>
+            <option value="all">{t('appointments.filter_all', 'All Status')}</option>
+            <option value="pending">{t('appointments.status_pending', 'Pending')}</option>
+            <option value="confirmed">{t('appointments.status_confirmed', 'Confirmed')}</option>
+            <option value="completed">{t('appointments.status_completed', 'Completed')}</option>
+            <option value="cancelled">{t('appointments.status_cancelled', 'Cancelled')}</option>
           </select>
         </div>
       </div>
@@ -211,15 +213,15 @@ function AppointmentList({ onBackToBooking }) {
           <div className="empty-icon">
             <Calendar size={80} />
           </div>
-          <h3>No Appointments Found</h3>
+          <h3>{t('appointments.no_appointments', 'No Appointments Found')}</h3>
           <p>
             {searchTerm || filterStatus !== 'all'
-              ? 'Try adjusting your search or filter criteria'
-              : 'You haven\'t booked any appointments yet'}
+              ? t('appointments.adjust_criteria', 'Try adjusting your search or filter criteria')
+              : t('appointments.no_booked_yet', 'You haven\'t booked any appointments yet')}
           </p>
           {!searchTerm && filterStatus === 'all' && (
             <button onClick={onBackToBooking} className="book-now-btn">
-              Book Your First Appointment
+              {t('appointments.book_first', 'Book Your First Appointment')}
             </button>
           )}
         </div>
@@ -285,7 +287,7 @@ function AppointmentList({ onBackToBooking }) {
                     }}
                     className="action-btn confirm-btn"
                   >
-                    Confirm
+                    {t('appointments.confirm_btn', 'Confirm')}
                   </button>
                 )}
                 {appointment.status === 'confirmed' && (
@@ -298,7 +300,7 @@ function AppointmentList({ onBackToBooking }) {
                       className="action-btn video-btn"
                     >
                       <Video size={16} />
-                      Join Call
+                      {t('appointments.join_call', 'Join Call')}
                     </button>
                     <button
                       onClick={(e) => {
@@ -307,7 +309,7 @@ function AppointmentList({ onBackToBooking }) {
                       }}
                       className="action-btn complete-btn"
                     >
-                      Complete
+                      {t('appointments.complete_btn', 'Complete')}
                     </button>
                   </>
                 )}
@@ -319,7 +321,7 @@ function AppointmentList({ onBackToBooking }) {
                     }}
                     className="action-btn cancel-btn"
                   >
-                    Cancel
+                    {t('appointments.cancel_btn', 'Cancel')}
                   </button>
                 )}
                 <button

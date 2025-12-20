@@ -8,6 +8,7 @@ const doctorSchema = new mongoose.Schema({
     ref: "Hospital"
   },
   city: String,
+  email: String,
   experience: Number,
   fees: Number,
   rating: Number

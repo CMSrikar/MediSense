@@ -36,42 +36,50 @@ const getDistance = (lat1, lon1, lat2, lon2) => {
 ================================================= */
 export const getNearbyDoctors = async (req, res) => {
   try {
-    const { problem, userLocation } = req.body;
+    const { problem, userLocation, city } = req.body;
 
-    if (!problem || !userLocation) {
+    if (!problem) {
       return res.status(400).json({
-        message: "problem and userLocation are required"
+        message: "problem is required"
       });
     }
 
     const specialization = problemMap[problem];
 
-    if (!specialization) {
-      return res.status(400).json({
-        message: "Invalid problem type"
-      });
+    // Default to Bhimavaram if no city provided
+    const targetCity = city ? city.toLowerCase() : "bhimavaram";
+
+    // Find hospitals in the target city
+    const hospitals = await Hospital.find({ city: targetCity });
+
+    let nearbyHospitals = [];
+
+    // If userLocation is provided, calculate distance
+    if (userLocation && userLocation.lat && userLocation.lng) {
+      const { lat, lng } = userLocation;
+
+      nearbyHospitals = hospitals
+        .map((hospital) => {
+          const distance = getDistance(
+            lat,
+            lng,
+            hospital.location.lat,
+            hospital.location.lng
+          );
+
+          return {
+            hospital,
+            distance
+          };
+        })
+        .filter((h) => h.distance <= 10); // 10 KM radius
+    } else {
+      // If no location, just take all hospitals in the city
+      nearbyHospitals = hospitals.map(h => ({
+        hospital: h,
+        distance: null // Distance unknown
+      }));
     }
-
-    const { lat, lng } = userLocation;
-
-    // 🔒 City fixed to Bhimavaram
-    const hospitals = await Hospital.find({ city: "bhimavaram" });
-
-    const nearbyHospitals = hospitals
-      .map((hospital) => {
-        const distance = getDistance(
-          lat,
-          lng,
-          hospital.location.lat,
-          hospital.location.lng
-        );
-
-        return {
-          hospital,
-          distance
-        };
-      })
-      .filter((h) => h.distance <= 10); // 10 KM radius
 
     if (nearbyHospitals.length === 0) {
       return res.json([]);
@@ -81,10 +89,15 @@ export const getNearbyDoctors = async (req, res) => {
       (h) => h.hospital._id
     );
 
-    const doctors = await Doctor.find({
-      hospitalId: { $in: hospitalIds },
-      specialization
-    }).populate("hospitalId", "name location");
+    // Build query: always filter by hospital
+    const query = { hospitalId: { $in: hospitalIds } };
+
+    // Only filter by specialization if it exists in our map
+    if (specialization) {
+      query.specialization = specialization;
+    }
+
+    const doctors = await Doctor.find(query).populate("hospitalId", "name location");
 
     const response = doctors.map((doc) => {
       const hospitalInfo = nearbyHospitals.find(
@@ -95,9 +108,12 @@ export const getNearbyDoctors = async (req, res) => {
         doctorName: doc.name,
         specialization: doc.specialization,
         hospital: doc.hospitalId.name,
-        distance: hospitalInfo.distance.toFixed(2) + " km",
+        distance: hospitalInfo.distance !== null ? hospitalInfo.distance.toFixed(2) + " km" : "N/A",
         fees: doc.fees,
-        rating: doc.rating
+        rating: doc.rating,
+        email: doc.email, // Added email field
+        doctorId: doc._id, // sending ID for selection
+        doctorInfo: doc    // sending full info for next step
       };
     });
 

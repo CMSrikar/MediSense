@@ -4,7 +4,9 @@ import './ProblemSelect.css';
 
 const ProblemSelect = ({ onNext }) => {
   const [selectedProblem, setSelectedProblem] = useState('');
-  
+  const [showOtherPopup, setShowOtherPopup] = useState(false);
+  const [otherDescription, setOtherDescription] = useState('');
+
   const problems = [
     { id: 'fever', name: 'Fever', emoji: '🤒' },
     { id: 'skin', name: 'Skin Rash', emoji: '🩹' },
@@ -16,9 +18,29 @@ const ProblemSelect = ({ onNext }) => {
     { id: 'other', name: 'Other', emoji: '📝' }
   ];
 
+  const handleProblemClick = (id) => {
+    setSelectedProblem(id);
+    if (id === 'other') {
+      setShowOtherPopup(true);
+    }
+  };
+
   const handleNext = () => {
-    if (selectedProblem) {
+    if (selectedProblem === 'other') {
+      if (otherDescription.trim()) {
+        onNext(otherDescription);
+      } else {
+        setShowOtherPopup(true); // Re-open if empty
+      }
+    } else if (selectedProblem) {
       onNext(selectedProblem);
+    }
+  };
+
+  const submitOther = () => {
+    if (otherDescription.trim()) {
+      setShowOtherPopup(false);
+      onNext(otherDescription); // Proceed immediately with description
     }
   };
 
@@ -34,7 +56,7 @@ const ProblemSelect = ({ onNext }) => {
           <div
             key={problem.id}
             className={`problem-card ${selectedProblem === problem.id ? 'selected' : ''}`}
-            onClick={() => setSelectedProblem(problem.id)}
+            onClick={() => handleProblemClick(problem.id)}
           >
             <div className="problem-emoji">{problem.emoji}</div>
             <div className="problem-name">{problem.name}</div>
@@ -42,13 +64,47 @@ const ProblemSelect = ({ onNext }) => {
         ))}
       </div>
 
-      <button 
+      <button
         className={`next-btn ${selectedProblem ? 'active' : ''}`}
         onClick={handleNext}
         disabled={!selectedProblem}
       >
         Next: Choose Location
       </button>
+
+      {/* Description Popup */}
+      {showOtherPopup && (
+        <div className="popup-overlay">
+          <div className="popup-content classic-theme">
+            <h2>Describe your problem</h2>
+            <p>Please provide a brief description of what you are experiencing.</p>
+
+            <textarea
+              value={otherDescription}
+              onChange={(e) => setOtherDescription(e.target.value)}
+              placeholder="E.g., Severe leg pain while walking..."
+              rows={4}
+              autoFocus
+            />
+
+            <div className="popup-actions">
+              <button
+                className="btn-cancel"
+                onClick={() => setShowOtherPopup(false)}
+              >
+                Cancel
+              </button>
+              <button
+                className="btn-submit"
+                onClick={submitOther}
+                disabled={!otherDescription.trim()}
+              >
+                Submit
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

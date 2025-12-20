@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import api from "../../../services/api";
 import "./SpecialistDoctors.css";
 
-const SpecialistDoctors = ({ selectedProblem }) => {
+const SpecialistDoctors = ({ selectedProblem, selectedCity, onNext }) => {
   const [loading, setLoading] = useState(true);
   const [doctors, setDoctors] = useState([]);
   const [error, setError] = useState("");
@@ -35,11 +35,18 @@ const SpecialistDoctors = ({ selectedProblem }) => {
   ------------------------------ */
   const fetchNearbyDoctors = async () => {
     try {
-      const userLocation = await getUserLocation();
+      let userLocation = null;
+      try {
+        userLocation = await getUserLocation();
+      } catch (locErr) {
+        console.warn("Location access denied or unavailable:", locErr);
+        // Continue without location
+      }
 
       const res = await api.post("/doctors/nearby", {
         problem: selectedProblem,
-        userLocation
+        userLocation,
+        city: selectedCity // Sent from parent (AppointmentBooking)
       });
 
       setDoctors(res.data);
@@ -81,16 +88,55 @@ const SpecialistDoctors = ({ selectedProblem }) => {
       <div className="doctors-list">
         {doctors.map((doc, index) => (
           <div key={index} className="doctor-card">
-            <h3>{doc.doctorName}</h3>
-            <p>{doc.specialization}</p>
-            <p>🏥 {doc.hospital}</p>
-            <p>📍 {doc.distance}</p>
-            <p>💰 ₹{doc.fees}</p>
-            <p>⭐ {doc.rating}</p>
 
-            <button className="book-slot-btn">
-              Book Appointment
-            </button>
+            {/* Avatar */}
+            <div className="doctor-avatar" style={{ background: index % 2 === 0 ? '#0F172A' : '#0D9488' }}>
+              {doc.doctorName.charAt(4) || "D"}
+            </div>
+
+            {/* Content Middle */}
+            <div className="doctor-card-content">
+              <div className="doctor-card-header">
+                <div className="doctor-info">
+                  <h3>{doc.doctorName}</h3>
+                  <span className="specialty">{doc.specialization}</span>
+                </div>
+                <div className="rating">
+                  <span className="stars">★ {doc.rating}</span>
+                </div>
+              </div>
+
+              <div className="doctor-details">
+                <div className="detail">
+                  <span className="icon">🏥</span>
+                  <span>{doc.hospital}</span>
+                </div>
+                <div className="detail">
+                  <span className="icon">📍</span>
+                  <span>{doc.distance}</span>
+                </div>
+                <div className="detail">
+                  <span className="icon">💰</span>
+                  <span>₹{doc.fees}</span>
+                </div>
+                {doc.email && (
+                  <div className="detail" style={{ gridColumn: '1 / -1' }}>
+                    <span className="icon">📧</span>
+                    <span style={{ fontSize: '13px', wordBreak: 'break-all' }}>{doc.email}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Actions Right */}
+            <div className="doctor-actions">
+              <button
+                className="book-slot-btn"
+                onClick={() => onNext({ doctorId: doc.doctorId, doctorInfo: doc.doctorInfo || doc })}
+              >
+                Book Appointment
+              </button>
+            </div>
           </div>
         ))}
       </div>

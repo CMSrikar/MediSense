@@ -1,12 +1,27 @@
 import { useState, useEffect } from 'react';
 import { CheckCircle, Calendar, Clock, User, Mail, Phone, Stethoscope, FileText, Download, Send, Video, Link as LinkIcon, Copy } from 'lucide-react';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 import './BookingConfirmation.css';
 
 function BookingConfirmation({ bookingData, onViewAppointments, onBackToBooking }) {
+  // Fallback to localStorage if bookingData prop is lost (e.g. on reload)
+  const safeBookingData = bookingData || JSON.parse(localStorage.getItem('lastBooking') || 'null');
+
   const [showConfetti, setShowConfetti] = useState(false);
   const [confettiPieces, setConfettiPieces] = useState([]);
-  const [meetLink, setMeetLink] = useState('');
   const [isVideoConsultation, setIsVideoConsultation] = useState(false);
+
+  if (!safeBookingData) {
+    return (
+      <div className="confirmation-container" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '60vh' }}>
+        <h2>No booking details found</h2>
+        <button onClick={onBackToBooking} className="nav-btn primary-btn" style={{ marginTop: '20px' }}>
+          Go to Booking
+        </button>
+      </div>
+    );
+  }
 
   useEffect(() => {
     setShowConfetti(true);
@@ -22,17 +37,6 @@ function BookingConfirmation({ bookingData, onViewAppointments, onBackToBooking 
     const storedBooking = JSON.parse(localStorage.getItem('lastBooking') || '{}');
     if (storedBooking.consultationType === 'video') {
       setIsVideoConsultation(true);
-      // Generate or get Meet link
-      if (storedBooking.meetLink) {
-        setMeetLink(storedBooking.meetLink);
-      } else {
-        // Generate new Meet link if not exists
-        const generatedLink = `https://meet.google.com/${Math.random().toString(36).substring(2, 10)}-${Math.random().toString(36).substring(2, 6)}`;
-        setMeetLink(generatedLink);
-        // Save it back
-        storedBooking.meetLink = generatedLink;
-        localStorage.setItem('lastBooking', JSON.stringify(storedBooking));
-      }
     }
 
     const timer = setTimeout(() => setShowConfetti(false), 4000);
@@ -40,93 +44,94 @@ function BookingConfirmation({ bookingData, onViewAppointments, onBackToBooking 
   }, []);
 
   const handleDownload = () => {
-    const content = `
-APPOINTMENT CONFIRMATION
-========================
+    const doc = new jsPDF();
 
-Booking ID: ${bookingData._id ? bookingData._id.slice(0, 8).toUpperCase() : 'BK' + Math.floor(100000 + Math.random() * 900000)}
-Status: ${bookingData.status ? bookingData.status.toUpperCase() : 'CONFIRMED'}
+    // Header
+    doc.setFontSize(22);
+    doc.setTextColor(40, 72, 182); // Blueish
+    doc.text("Booking Confirmation", 105, 20, { align: "center" });
 
-PATIENT DETAILS
----------------
-Name: ${bookingData.patient_name || 'Not specified'}
-Email: ${bookingData.patient_email || 'Not specified'}
-Phone: ${bookingData.patient_phone || 'Not specified'}
+    // Appointment Info
+    doc.setFontSize(12);
+    doc.setTextColor(60, 60, 60);
+    doc.text(`Generated on: ${new Date().toLocaleString()}`, 105, 28, { align: "center" });
 
-APPOINTMENT DETAILS
-------------------
-Date: ${bookingData.appointment_date ? new Date(bookingData.appointment_date).toLocaleDateString('en-US', {
-  weekday: 'long',
-  year: 'numeric',
-  month: 'long',
-  day: 'numeric'
-}) : new Date().toLocaleDateString('en-US', {
-  weekday: 'long',
-  year: 'numeric',
-  month: 'long',
-  day: 'numeric'
-})}
-Time: ${bookingData.appointment_time || 'Not specified'}
-Consultation Type: ${isVideoConsultation ? 'VIDEO CALL' : 'IN-PERSON'}
-Department: ${bookingData.department || 'General'}
-Doctor: ${bookingData.doctor_name || 'Dr. Not specified'}
+    // Doctor & Hospital Section
+    doc.setFontSize(14);
+    doc.setTextColor(33, 33, 33);
+    doc.text("Doctor & Hospital Details", 14, 45);
 
-${isVideoConsultation ? `
-VIDEO CONSULTATION
------------------
-Google Meet Link: ${meetLink}
-Meeting Time: ${bookingData.appointment_time || 'As scheduled'}
-Instructions:
-1. Click the link 5 minutes before appointment
-2. Allow camera & microphone access
-3. Ensure good internet connection
-4. Doctor will join shortly
-` : `
-CLINIC VISIT
-------------
-Clinic: ${bookingData.doctor?.clinic || 'Main Hospital'}
-Address: ${bookingData.clinic_address || 'Please check SMS for details'}
-Instructions:
-1. Arrive 15 minutes before appointment
-2. Bring valid ID and medical records
-3. Check-in at reception
-4. Wear mask if required
-`}
+    doc.setDrawColor(200, 200, 200);
+    doc.line(14, 48, 196, 48);
 
-SYMPTOMS/REASON
---------------
-${bookingData.symptoms || 'General consultation'}
+    doc.setFontSize(11);
+    doc.setTextColor(60, 60, 60);
+    doc.text(`Doctor: ${safeBookingData.doctor_name || safeBookingData.doctor?.name || 'Dr. Not specified'}`, 14, 58);
+    doc.text(`Department: ${safeBookingData.department || 'General Physician'}`, 14, 65);
+    doc.text(`Hospital: ${safeBookingData.doctor?.hospital || safeBookingData.hospitalName || 'Main Hospital'}`, 110, 58);
+    doc.text(`Address: ${safeBookingData.clinic_address || safeBookingData.doctor?.location || 'Bhimavaram'}`, 110, 65);
 
-${isVideoConsultation ? 'Thank you for choosing telemedicine services!' : 'Thank you for choosing our healthcare services!'}
-    `;
+    // Patient Section
+    doc.setFontSize(14);
+    doc.setTextColor(33, 33, 33);
+    doc.text("Patient Details", 14, 85);
+    doc.line(14, 88, 196, 88);
 
-    const blob = new Blob([content], { type: 'text/plain' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `appointment-${bookingData._id ? bookingData._id.slice(0, 8).toUpperCase() : 'NEW'}.txt`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    window.URL.revokeObjectURL(url);
+    doc.setFontSize(11);
+    doc.setTextColor(60, 60, 60);
+    doc.text(`Name: ${safeBookingData.patient?.name || safeBookingData.patient_name || 'Not specified'}`, 14, 98);
+    doc.text(`Phone: ${safeBookingData.patient?.phone || safeBookingData.patient_phone || 'Not specified'}`, 110, 98);
+    doc.text(`Email: ${safeBookingData.patient?.email || safeBookingData.patient_email || 'Not specified'}`, 14, 105);
+
+    // Table for details
+    const tableBody = [
+      ['Appointment Date', safeBookingData.appointment_date ? new Date(safeBookingData.appointment_date).toLocaleDateString() : (safeBookingData.slot?.displayDate || 'N/A')],
+      ['Time Slot', safeBookingData.appointment_time || safeBookingData.slot?.time || 'N/A'],
+      ['Consultation Type', isVideoConsultation ? 'Video Consultation' : 'In-Person Visit'],
+      ['Symptoms / Note', safeBookingData.symptoms || 'General Checkup']
+    ];
+
+
+
+    autoTable(doc, {
+      startY: 115,
+      head: [['Description', 'Details']],
+      body: tableBody,
+      theme: 'grid',
+      headStyles: { fillColor: [40, 72, 182] },
+      styles: { fontSize: 10, cellPadding: 5 }
+    });
+
+    // Instructions
+    const finalY = doc.lastAutoTable.finalY || 150;
+
+    doc.setFontSize(12);
+    doc.setTextColor(33, 33, 33);
+    doc.text("Instructions", 14, finalY + 15);
+
+    doc.setFontSize(10);
+    doc.setTextColor(80, 80, 80);
+    const instructions = isVideoConsultation
+      ? ["1. Join the video link 5 minutes before scheduled time.", "2. Ensure you have a stable internet connection.", "3. Have your medical history ready if needed."]
+      : ["1. Please arrive 15 minutes prior to your appointment.", "2. Bring a valid ID proof and this confirmation (digital or print).", "3. Wear a mask if required by safety protocols."];
+
+    instructions.forEach((line, index) => {
+      doc.text(line, 14, finalY + 23 + (index * 6));
+    });
+
+    // Footer
+    doc.setFontSize(9);
+    doc.setTextColor(150, 150, 150);
+    doc.text("Thank you for choosing our healthcare services.", 105, 280, { align: "center" });
+
+    doc.save(`appointment-${safeBookingData._id ? safeBookingData._id.slice(0, 8) : 'confirmation'}.pdf`);
   };
 
   const handleSendSMS = () => {
-    alert('SMS confirmation sent to ' + (bookingData.patient_phone || 'your phone number'));
+    alert('SMS confirmation sent to ' + (safeBookingData.patient_phone || 'your phone number'));
   };
 
-  const handleCopyMeetLink = () => {
-    if (meetLink) {
-      navigator.clipboard.writeText(meetLink);
-      alert('Google Meet link copied to clipboard!');
-    }
-  };
 
-  const handleJoinMeeting = () => {
-    if (meetLink) {
-      window.open(meetLink, '_blank');
-    }
-  };
 
   return (
     <div className="confirmation-container">
@@ -159,23 +164,16 @@ ${isVideoConsultation ? 'Thank you for choosing telemedicine services!' : 'Thank
         </div>
 
         <h1 className="confirmation-title">
-          {isVideoConsultation ? '🎥 Video Consultation Scheduled!' : '✅ Appointment Confirmed!'}
+          📧 Mail Sent Successfully
         </h1>
         <p className="confirmation-subtitle">
-          {isVideoConsultation 
-            ? 'Your video consultation has been scheduled. Google Meet link is ready.' 
-            : 'Your appointment has been successfully booked. We\'ve sent a confirmation to your email.'}
+          Your appointment request has been sent to the hospital. We have notified them via email.
         </p>
 
-        <div className="booking-id-card">
-          <span className="booking-id-label">Booking ID</span>
-          <span className="booking-id-value">
-            {bookingData._id ? bookingData._id.slice(0, 8).toUpperCase() : 'BK' + Math.floor(100000 + Math.random() * 900000)}
-          </span>
-          <div className={`status-badge ${isVideoConsultation ? 'video-status' : ''}`}>
-            <span className="status-dot"></span>
-            {isVideoConsultation ? 'Video Call' : (bookingData.status || 'Confirmed')}
-          </div>
+        {/* Booking ID section removed as per request */}
+        <div className={`status-badge ${isVideoConsultation ? 'video-status' : ''}`} style={{ margin: '0 auto 20px auto', display: 'table' }}>
+          <span className="status-dot"></span>
+          {isVideoConsultation ? 'Video Call' : (safeBookingData.status || 'Confirmed')}
         </div>
 
         {/* Consultation Type Badge */}
@@ -195,164 +193,56 @@ ${isVideoConsultation ? 'Thank you for choosing telemedicine services!' : 'Thank
           </div>
         </div>
 
-        <div className="details-grid">
-          <div className="detail-card">
-            <div className="detail-icon calendar-icon">
-              <Calendar size={24} />
+        {/* Replaced 6-block grid with User Choice Summary */}
+        <div className="booking-summary-card">
+          <h3>📝 Booking Summary</h3>
+
+          <div className="summary-row">
+            <div className="summary-item">
+              <span className="label">Doctor</span>
+              <span className="value">{safeBookingData.doctor_name || safeBookingData.doctor?.name || 'Dr. Not specified'}</span>
+              <span className="sub-value">{safeBookingData.department || 'General Physician'}</span>
             </div>
-            <div className="detail-content">
-              <span className="detail-label">Appointment Date</span>
-              <span className="detail-value">
-                {bookingData.appointment_date ? new Date(bookingData.appointment_date).toLocaleDateString('en-US', {
-                  weekday: 'long',
-                  year: 'numeric',
-                  month: 'long',
-                  day: 'numeric'
-                }) : new Date().toLocaleDateString('en-US', {
-                  weekday: 'long',
-                  year: 'numeric',
-                  month: 'long',
-                  day: 'numeric'
-                })}
+
+            <div className="summary-item">
+              <span className="label">Hospital</span>
+              <span className="value">{safeBookingData.doctor?.hospital || safeBookingData.hospitalName || 'Main Hospital'}</span>
+              <span className="sub-value">{safeBookingData.clinic_address || safeBookingData.doctor?.location || 'Bhimavaram'}</span>
+            </div>
+          </div>
+
+          <div className="summary-row">
+            <div className="summary-item">
+              <span className="label">Date & Time</span>
+              <span className="value">
+                {safeBookingData.appointment_date
+                  ? new Date(safeBookingData.appointment_date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
+                  : (safeBookingData.slot?.displayDate || safeBookingData.slot?.date || 'Date N/A')}
+              </span>
+              <span className="sub-value">
+                {safeBookingData.appointment_time || safeBookingData.slot?.time || 'Time N/A'}
+                {safeBookingData.slot?.period ? ` (${safeBookingData.slot.period})` : ''}
               </span>
             </div>
-          </div>
 
-          <div className="detail-card">
-            <div className="detail-icon clock-icon">
-              <Clock size={24} />
-            </div>
-            <div className="detail-content">
-              <span className="detail-label">Time Slot</span>
-              <span className="detail-value">{bookingData.appointment_time || '10:00 AM'}</span>
+            <div className="summary-item">
+              <span className="label">Problem / Symptoms</span>
+              <span className="value">{safeBookingData.symptoms || 'General Checkup'}</span>
             </div>
           </div>
-
-          <div className="detail-card">
-            <div className="detail-icon doctor-icon">
-              <Stethoscope size={24} />
-            </div>
-            <div className="detail-content">
-              <span className="detail-label">Doctor</span>
-              <span className="detail-value">{bookingData.doctor_name || bookingData.doctor?.name || 'Dr. Not specified'}</span>
-              <span className="detail-subdesc">{bookingData.department || 'General Physician'}</span>
-            </div>
-          </div>
-
-          {isVideoConsultation ? (
-            <>
-              {/* Video Consultation Details */}
-              <div className="detail-card full-width">
-                <div className="detail-icon video-icon">
-                  <Video size={24} />
-                </div>
-                <div className="detail-content">
-                  <span className="detail-label">Video Platform</span>
-                  <span className="detail-value">Google Meet</span>
-                  <span className="detail-subdesc">Click link to join meeting</span>
-                </div>
-              </div>
-
-              {/* Google Meet Link Section */}
-              <div className="meet-link-section">
-                <div className="meet-link-header">
-                  <LinkIcon size={20} />
-                  <span>Google Meet Link</span>
-                </div>
-                <div className="meet-link-box">
-                  <code className="meet-link">{meetLink}</code>
-                  <div className="meet-link-actions">
-                    <button onClick={handleCopyMeetLink} className="meet-action-btn copy-btn">
-                      <Copy size={16} />
-                      Copy
-                    </button>
-                    <button onClick={handleJoinMeeting} className="meet-action-btn join-btn">
-                      <Video size={16} />
-                      Join Now
-                    </button>
-                  </div>
-                </div>
-                <div className="meet-instructions">
-                  <p><strong>Instructions:</strong></p>
-                  <ol>
-                    <li>Click "Join Now" 5 minutes before your appointment</li>
-                    <li>Allow camera & microphone access</li>
-                    <li>Ensure good internet connection</li>
-                    <li>Doctor will join the meeting shortly</li>
-                    <li>Have your medical history ready (if any)</li>
-                  </ol>
-                </div>
-              </div>
-            </>
-          ) : (
-            <>
-              {/* In-Person Details */}
-              <div className="detail-card">
-                <div className="detail-icon patient-icon">
-                  <User size={24} />
-                </div>
-                <div className="detail-content">
-                  <span className="detail-label">Patient Name</span>
-                  <span className="detail-value">{bookingData.patient_name || 'Not specified'}</span>
-                </div>
-              </div>
-
-              <div className="detail-card">
-                <div className="detail-icon email-icon">
-                  <Mail size={24} />
-                </div>
-                <div className="detail-content">
-                  <span className="detail-label">Email</span>
-                  <span className="detail-value">{bookingData.patient_email || 'Not specified'}</span>
-                </div>
-              </div>
-
-              <div className="detail-card">
-                <div className="detail-icon phone-icon">
-                  <Phone size={24} />
-                </div>
-                <div className="detail-content">
-                  <span className="detail-label">Phone</span>
-                  <span className="detail-value">{bookingData.patient_phone || 'Not specified'}</span>
-                </div>
-              </div>
-
-              {/* Clinic Info for In-Person */}
-              <div className="clinic-info">
-                <h3>📍 Clinic Information</h3>
-                <div className="clinic-details">
-                  <p><strong>{bookingData.doctor?.clinic || 'Main Hospital'}</strong></p>
-                  <p>{bookingData.clinic_address || '123 Medical Street, Healthcare City'}</p>
-                  <p>📞 Reception: (555) 123-4567</p>
-                </div>
-              </div>
-            </>
-          )}
         </div>
 
-        <div className="symptoms-card">
-          <div className="symptoms-header">
-            <FileText size={20} />
-            <span>Symptoms / Reason for Visit</span>
-          </div>
-          <p className="symptoms-text">{bookingData.symptoms || 'General consultation'}</p>
-        </div>
+
+
+
 
         <div className="action-buttons">
           <button onClick={handleDownload} className="action-btn download-btn">
             <Download size={20} />
             Download Details
           </button>
-          <button onClick={handleSendSMS} className="action-btn sms-btn">
-            <Send size={20} />
-            Send SMS
-          </button>
-          {isVideoConsultation && (
-            <button onClick={handleJoinMeeting} className="action-btn video-btn">
-              <Video size={20} />
-              Join Meeting
-            </button>
-          )}
+
+
         </div>
 
         <div className="navigation-buttons">
@@ -367,11 +257,7 @@ ${isVideoConsultation ? 'Thank you for choosing telemedicine services!' : 'Thank
         <div className={`info-box ${isVideoConsultation ? 'video-info' : ''}`}>
           <div className="info-icon">ℹ️</div>
           <div className="info-text">
-            <strong>Important:</strong> {
-              isVideoConsultation 
-                ? 'Please join the meeting 5 minutes before your scheduled time. Ensure good internet connection, proper lighting, and have your medical history ready.'
-                : 'Please arrive 15 minutes before your scheduled time. Bring a valid ID and any relevant medical records or previous prescriptions.'
-            }
+            <strong>Important:</strong> Please wait for further instructions regarding your appointment via email or SMS.
           </div>
         </div>
       </div>

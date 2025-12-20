@@ -11,6 +11,11 @@ const hospitalSchema = new mongoose.Schema({
     required: true
   },
 
+  email: {
+    type: String,
+    required: false
+  },
+
   // 📍 Location of hospital (for nearby search)
   location: {
     lat: {

@@ -13,26 +13,31 @@ const seedData = async () => {
       {
         name: "Sri Aditya Multi Speciality Hospital",
         city: "bhimavaram",
+        email: "contact@sriaditya.com",
         location: { lat: 16.5449, lng: 81.5212 } // Center-isch
       },
       {
         name: "Anjali Hospital",
         city: "bhimavaram",
+        email: "info@anjalihospital.in",
         location: { lat: 16.5465, lng: 81.5230 } // North East
       },
       {
         name: "Vijaya Super Speciality Hospital",
         city: "bhimavaram",
+        email: "helpdesk@vijayahospital.com",
         location: { lat: 16.5432, lng: 81.5195 } // South West
       },
       {
         name: "Government Area Hospital",
         city: "bhimavaram",
+        email: "admin@govtfh-bmy.org",
         location: { lat: 16.5478, lng: 81.5201 } // North
       },
       {
         name: "Sree Ramadevi Neuro Hospital",
         city: "bhimavaram",
+        email: "enquiry@ramadevineuro.com",
         location: { lat: 16.5420, lng: 81.5188 } // South West
       }
     ]);
@@ -49,6 +54,7 @@ const seedData = async () => {
         specialization: "General Physician",
         hospitalId: findHosp("Sri Aditya"),
         city: "bhimavaram",
+        email: "keerthikaduddupudi@gmail.com",
         experience: 15,
         fees: 500,
         rating: 4.8
@@ -58,6 +64,7 @@ const seedData = async () => {
         specialization: "General Physician",
         hospitalId: findHosp("Government"),
         city: "bhimavaram",
+        email: "keerthikaduddupudi@gmail.com",
         experience: 20,
         fees: 200,
         rating: 4.2
@@ -69,6 +76,7 @@ const seedData = async () => {
         specialization: "Dermatologist",
         hospitalId: findHosp("Anjali"),
         city: "bhimavaram",
+        email: "keerthikaduddupudi@gmail.com",
         experience: 8,
         fees: 600,
         rating: 4.9
@@ -80,6 +88,7 @@ const seedData = async () => {
         specialization: "Neurologist",
         hospitalId: findHosp("Ramadevi"),
         city: "bhimavaram",
+        email: "keerthikaduddupudi@gmail.com",
         experience: 25,
         fees: 1000,
         rating: 4.7
@@ -91,6 +100,7 @@ const seedData = async () => {
         specialization: "Gastroenterologist",
         hospitalId: findHosp("Sri Aditya"),
         city: "bhimavaram",
+        email: "keerthikaduddupudi@gmail.com",
         experience: 12,
         fees: 700,
         rating: 4.6
@@ -102,28 +112,31 @@ const seedData = async () => {
         specialization: "Orthopedist",
         hospitalId: findHosp("Vijaya"),
         city: "bhimavaram",
+        email: "keerthikaduddupudi@gmail.com",
         experience: 18,
         fees: 800,
         rating: 4.5
       },
-      
+
       // Psychiatrist (Anxiety)
       {
         name: "Dr. M. Kavitha",
         specialization: "Psychiatrist",
         hospitalId: findHosp("Ramadevi"),
         city: "bhimavaram",
+        email: "keerthikaduddupudi@gmail.com",
         experience: 10,
         fees: 900,
         rating: 4.8
       },
-      
+
       // Ophthalmologist (Eye)
       {
         name: "Dr. S. Ravi Kumar",
         specialization: "Ophthalmologist",
         hospitalId: findHosp("Anjali"),
         city: "bhimavaram",
+        email: "keerthikaduddupudi@gmail.com",
         experience: 14,
         fees: 400,
         rating: 4.4
