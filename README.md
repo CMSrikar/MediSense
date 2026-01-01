@@ -85,3 +85,22 @@ A comprehensive healthcare platform connecting patients with doctors, labs, and 
 - `/api/medicines`: E-commerce catalog
 - `/api/labs`: Lab test bookings
 - `/api/reports`: AI report processing
+
+## Required dependencies
+
+MediCare
+npm i   
+npm i axios 
+npm install @fortawesome/fontawesome-free
+npm install framer-motion lucide-react
+npm install react-router-dom
+npm install @react-google-maps/api
+npm install react-i18next i18next
+
+
+
+//backend
+npm install jsonwebtoken bcryptjs nodemailer
+npm install crypto
+npm i mongoose express nodemon
+npm i openai
