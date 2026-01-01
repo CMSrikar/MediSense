@@ -47,7 +47,7 @@ export default function Remedies() {
     try {
       setSelectedCategory(category);
       const res = await axios.get(
-        `http://localhost:5174/api/remedies?category=${category}`
+        `http://localhost:5000/api/remedies?category=${category}`
       );
       setRemedies(res.data);
     } catch (err) {
@@ -63,7 +63,7 @@ export default function Remedies() {
       setAiResult("");
 
       const res = await axios.post(
-        "http://localhost:5174/api/ai/remedy",
+        "http://localhost:5000/api/ai/remedy",
         { symptom }
       );
 

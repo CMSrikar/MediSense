@@ -22,6 +22,12 @@ import AppointmentBooking from "./pages/user/AppointmentBooking";
 import BookingConfirmation from "./pages/user/BookingConfirmation";
 import AppointmentList from "./pages/user/AppointmentList";
 import Remedies from "./pages/user/Remedies";
+import Tests from "./pages/LabTest/Tests";
+import { CartProvider } from "./context/CartContext.jsx";
+import Medicines from "./pages/Medicine/Medicines";
+import Cart from "./pages/Medicine/Cart";
+import Checkout from "./pages/Medicine/Checkout";
+import OrderSuccess from "./pages/Medicine/OrderSuccess";
 // import VideoConsultation from "./pages/user/appointment-steps/VideoConsultation.jsx";
 
 // Doctor
@@ -80,6 +86,21 @@ function App() {
       case "/reports":
         setCurrentPage("reports");
         break;
+      case "/lab-test":
+        setCurrentPage("lab-test");
+        break;
+      case "/medicines":
+        setCurrentPage("medicines");
+        break;
+      case "/cart":
+        setCurrentPage("cart");
+        break;
+      case "/checkout":
+        setCurrentPage("checkout");
+        break;
+      case "/order-success":
+        setCurrentPage("order-success");
+        break;
       case "/doctor/dashboard":
         setCurrentPage("dashboard");
         break;
@@ -136,124 +157,133 @@ function App() {
   );
 
   return (
-    <div className="app-container">
-      {/* -------- LANDING -------- */}
-      {currentPage === "landing" && renderLandingPage()}
+    <CartProvider>
+      <div className="app-container">
+        {/* -------- LANDING -------- */}
+        {currentPage === "landing" && renderLandingPage()}
 
-      {/* -------- AUTH -------- */}
-      {currentPage === "login" && (
-        <Login
-          onLoginSuccess={handleLoginSuccess}
-          onGoToRegister={() => go("register", "/register")}
-          onGoToForgot={() => go("forgot", "/forgot-password")}
-        />
-      )}
+        {/* -------- AUTH -------- */}
+        {currentPage === "login" && (
+          <Login
+            onLoginSuccess={handleLoginSuccess}
+            onGoToRegister={() => go("register", "/register")}
+            onGoToForgot={() => go("forgot", "/forgot-password")}
+          />
+        )}
 
-      {currentPage === "register" && (
-        <Register
-          onGoToLogin={() => go("login", "/login")}
-          onRegisterSuccess={(role) =>
-            handleLoginSuccess(role === "hospital" ? "doctor" : "patient")
-          }
-        />
-      )}
+        {currentPage === "register" && (
+          <Register
+            onGoToLogin={() => go("login", "/login")}
+            onRegisterSuccess={(role) =>
+              handleLoginSuccess(role === "hospital" ? "doctor" : "patient")
+            }
+          />
+        )}
 
-      {currentPage === "forgot" && (
-        <ForgotPassword onClose={() => go("login", "/login")} />
-      )}
+        {currentPage === "forgot" && (
+          <ForgotPassword onClose={() => go("login", "/login")} />
+        )}
 
-      {/* -------- HOME -------- */}
-      {currentPage === "home" && (
-        <Home
-          onBookAppointment={() => {
-            setUserRole("patient");
-            go("booking", "/booking");
-          }}
-          onDoctorLogin={() => {
-            setUserRole("doctor");
-            go("dashboard", "/doctor/dashboard");
-          }}
-        />
-      )}
+        {/* -------- HOME -------- */}
+        {currentPage === "home" && (
+          <Home
+            onBookAppointment={() => {
+              setUserRole("patient");
+              go("booking", "/booking");
+            }}
+            onDoctorLogin={() => {
+              setUserRole("doctor");
+              go("dashboard", "/doctor/dashboard");
+            }}
+          />
+        )}
 
-      {/* -------- PATIENT -------- */}
-      {userRole === "patient" && (
-        <>
-          {currentPage === "booking" && (
-            <AppointmentBooking
-              onSuccess={handleBookingSuccess}
-              onViewAppointments={() => go("list", "/appointments")}
-              onBackToHome={() => go("home", "/home")}
-            />
-          )}
+        {/* -------- PATIENT -------- */}
+        {userRole === "patient" && (
+          <>
+            {currentPage === "booking" && (
+              <AppointmentBooking
+                onSuccess={handleBookingSuccess}
+                onViewAppointments={() => go("list", "/appointments")}
+                onBackToHome={() => go("home", "/home")}
+              />
+            )}
 
-          {currentPage === "confirmation" && (
-            <BookingConfirmation
-              bookingData={bookingData}
-              onViewAppointments={() => go("list", "/appointments")}
-              onBackToBooking={() => go("booking", "/booking")}
-              onBackToHome={() => go("home", "/home")}
-            />
-          )}
+            {currentPage === "confirmation" && (
+              <BookingConfirmation
+                bookingData={bookingData}
+                onViewAppointments={() => go("list", "/appointments")}
+                onBackToBooking={() => go("booking", "/booking")}
+                onBackToHome={() => go("home", "/home")}
+              />
+            )}
 
-          {currentPage === "list" && (
-            <AppointmentList
-              onBackToBooking={() => go("booking", "/booking")}
-              onBackToHome={() => go("home", "/home")}
-            />
-          )}
+            {currentPage === "list" && (
+              <AppointmentList
+                onBackToBooking={() => go("booking", "/booking")}
+                onBackToHome={() => go("home", "/home")}
+              />
+            )}
 
-          {currentPage === "remedies" && (
-            <Remedies
-              onBackToHome={() => go("home", "/home")}
-              onBookAppointment={() => go("booking", "/booking")}
-            />
-          )}
+            {currentPage === "remedies" && (
+              <Remedies
+                onBackToHome={() => go("home", "/home")}
+                onBookAppointment={() => go("booking", "/booking")}
+              />
+            )}
 
-          {currentPage === "reports" && <ReportSummarization />}
+            {currentPage === "reports" && <ReportSummarization />}
 
-          {/* {currentPage === "video-consultation" && (
+            {currentPage === "lab-test" && <Tests />}
+
+            {currentPage === "medicines" && <Medicines />}
+            {currentPage === "cart" && <Cart />}
+            {currentPage === "checkout" && <Checkout />}
+            {currentPage === "order-success" && <OrderSuccess />}
+
+            {/* {currentPage === "video-consultation" && (
             <VideoConsultation
               appointmentId={selectedAppointmentId}
               onBack={() => go("list", "/appointments")}
               onBackToHome={() => go("home", "/home")}
             />
           )} */}
-        </>
-      )}
+          </>
+        )}
 
-      {/* -------- DOCTOR -------- */}
-      {userRole === "doctor" && (
-        <>
-          {currentPage === "dashboard" && (
-            <DoctorDashboard
-              onLogout={handleLogout}
-              onManage={(id) => {
-                setSelectedAppointmentId(id);
-                go("management", "/doctor/management");
-              }}
-              onBackToHome={() => go("home", "/home")}
-            />
-          )}
+        {/* -------- DOCTOR -------- */}
+        {userRole === "doctor" && (
+          <>
+            {currentPage === "dashboard" && (
+              <DoctorDashboard
+                onLogout={handleLogout}
+                onManage={(id) => {
+                  setSelectedAppointmentId(id);
+                  go("management", "/doctor/management");
+                }}
+                onBackToHome={() => go("home", "/home")}
+              />
+            )}
 
-          {currentPage === "management" && (
-            <AppointmentManagement
-              appointmentId={selectedAppointmentId}
-              onBack={() => go("dashboard", "/doctor/dashboard")}
-              onBackToHome={() => go("home", "/home")}
-            />
-          )}
+            {currentPage === "management" && (
+              <AppointmentManagement
+                appointmentId={selectedAppointmentId}
+                onBack={() => go("dashboard", "/doctor/dashboard")}
+                onBackToHome={() => go("home", "/home")}
+              />
+            )}
 
-          {currentPage === "consultation" && (
-            <VideoConsultation
-              appointmentId={selectedAppointmentId}
-              onBack={() => go("dashboard", "/doctor/dashboard")}
-              onBackToHome={() => go("home", "/home")}
-            />
-          )}
-        </>
-      )}
-    </div>
+            {currentPage === "consultation" && (
+              <VideoConsultation
+                appointmentId={selectedAppointmentId}
+                onBack={() => go("dashboard", "/doctor/dashboard")}
+                onBackToHome={() => go("home", "/home")}
+              />
+            )}
+          </>
+        )}
+      </div>
+    </CartProvider>
   );
 }
 

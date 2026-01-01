@@ -58,6 +58,8 @@ function UserHomePage() {
           src={sixImage}
           alt="Pharmacy"
           title="Pharmacy"
+          onClick={() => navigate("/medicines")}
+          style={{ cursor: "pointer" }}
         />
 
         <img
@@ -65,6 +67,8 @@ function UserHomePage() {
           src={sevenImage}
           alt="Lab Testing"
           title="Lab Testing"
+          onClick={() => navigate("/lab-test")}
+          style={{ cursor: "pointer" }}
         />
       </div>
       <SOSButton />

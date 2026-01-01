@@ -4,8 +4,14 @@ import connectDB from './src/config/db.js';
 
 dotenv.config();
 
+import { seedLabs } from './src/seeder/labSeeder.js';
+import { seedMedicines } from './src/seeder/medicineSeeder.js';
+
 // Connect DB
-connectDB();
+connectDB().then(() => {
+  seedLabs();
+  seedMedicines();
+});
 
 const PORT = process.env.PORT || 5000;
 
